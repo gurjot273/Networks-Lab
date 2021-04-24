@@ -1,0 +1,86 @@
+Table for transmission data
+
+p       Number_of_transmissions     len(String)     ratio
+0.05    52                          50              1.04
+0.10    56                          50              1.12           
+0.15    69                          50              1.38
+0.20    77                          50              1.54
+0.25    84                          50              1.68
+0.30    96                          50              1.92
+0.35    109                         50              2.18
+0.40    124                         50              2.48
+0.45    150                         50              3.00
+0.50    174                         50              3.48    
+
+
+List of all messages and their formats, with a brief description of the use of each field
+
+Application message format
+
+Char indicator 
+Message id
+Message
+
+Here, the char indicator is a 1 byte (1 character) that indicates whether a message is an application message or an acknowledgement message. Here, the convention followed is that for an application message, the character ‘M’ will be present and for the acknowledgements, the character ‘A’ is present.
+The message_id is an integer (4 bytes) which is the id of the message that is appended in the network byte order using memcpy.
+The actual message sent to the r_sendto is then appended starting from the index 5.
+
+Acknowledgement message format
+Char indicator 
+Message id
+
+Here, the char indicator is a 1 byte (1 character) that indicates whether a message is an application message or an acknowledgement message. Here, the convention followed is that for an application message, the character ‘M’ will be present and for the acknowledgements, the character ‘A’ is present.
+The message_id is an integer (4 bytes) which is the id of the message that is appended in the network byte order using memcpy.
+
+
+List of all data structures used and a brief description of their fields
+
+1) send_buffer: used to store the message sent, send buffer is taken as an array of struct objects of type:
+
+struct send_buffer_elem{
+    int id; 
+    char msg[MSG_SIZE];
+    size_t len;
+    struct sockaddr_in dest_addr;
+    socklen_t addrlen;
+} * send_buffer;
+
+id :- used to store message id
+msg :- array used to store the message
+len :- len is the length of the message sent
+dest_addr :- dest_addr is the structure that contains the protocol, IP and port of the receiver socket to which this message was originally sent
+addrlen :- used to store the size of dest_addr
+
+2) receive_buffer: used to store the messages reveived, receive buffer is taken as an array of struct objects of type:
+
+struct receive_buffer_elem{
+    char msg[MSG_SIZE];
+    size_t msg_len;
+    struct sockaddr_in src_addr;
+    socklen_t addrlen;
+} * receive_buffer;
+
+msg :- array used to store the message
+len :- len is the length of the message sent
+src_addr :- src_addr is the structure that contains the protocol, IP and port of the sender socket from which this message was originally sent
+addrlen :- used to store the size of src_addr
+
+3) int * received_message_id_table: stores the id of already received messages
+
+4) unacknowledged_message_table: Used to store message which are sent but still not acknowledged, it is taken as an array of struct objects of type:
+
+struct unacknowledged_message{
+    int id;
+    char msg[MSG_SIZE];
+    size_t len;
+    struct timeval tv;
+    struct sockaddr_in dest_addr;
+    socklen_t addrlen;
+} * unacknowledged_message_table;
+
+id :- used to store the id of message
+msg :- array used to store the message
+len :- len is the length of the message sent for retransmission
+tv :- it holds the value of the seconds and microseconds at the time when the message was sent
+dest_addr :- dest_addr is the structure that contains the protocol, IP and port of the receiver socket to which this message was originally sent
+addrlen :- used to store the size of src_addr
